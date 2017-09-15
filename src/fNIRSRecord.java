@@ -3,9 +3,6 @@ import javafx.beans.property.SimpleLongProperty;
 
 import java.util.ArrayList;
 
-/**
- * Created by Luke on 17/06/2017.
- */
 public class fNIRSRecord
 {
     private SimpleFloatProperty time = new SimpleFloatProperty();
@@ -26,19 +23,19 @@ public class fNIRSRecord
     private SimpleFloatProperty channel15 = new SimpleFloatProperty();
     private SimpleFloatProperty channel16 = new SimpleFloatProperty();
 
-    private SimpleFloatProperty average1 = new SimpleFloatProperty();
-    private SimpleFloatProperty average2 = new SimpleFloatProperty();
-    private SimpleFloatProperty average3 = new SimpleFloatProperty();
-    private SimpleFloatProperty average4 = new SimpleFloatProperty();
+    SimpleFloatProperty average1 = new SimpleFloatProperty();
+    SimpleFloatProperty average2 = new SimpleFloatProperty();
+    SimpleFloatProperty average3 = new SimpleFloatProperty();
+    SimpleFloatProperty average4 = new SimpleFloatProperty();
 
-    private SimpleLongProperty heartRateEpoch = new SimpleLongProperty();
-    private SimpleFloatProperty heartRate = new SimpleFloatProperty();
+    SimpleLongProperty heartRateEpoch = new SimpleLongProperty();
+    SimpleFloatProperty heartRate = new SimpleFloatProperty();
 
     ArrayList<SimpleFloatProperty> channels = new ArrayList<>();
     ArrayList<SimpleFloatProperty> averages = new ArrayList<>();
     ArrayList<SimpleFloatProperty> heartRates = new ArrayList<>();
 
-    public void Init()
+    void Init()
     {
         channels.add(channel1);
         channels.add(channel2);
@@ -66,20 +63,13 @@ public class fNIRSRecord
         heartRates.add(heartRate);
     }
 
-    public Float getTime()
-    {
-        return time.get();
-    }
+    public Float getTime() { return time.get(); }
 
-    public Float getChannel1()
-    {
-        return channel1.get();
-    }
+    public void setTime(SimpleFloatProperty time) { this.time = time; }
 
-    public Float getChannel2()
-    {
-        return channel2.get();
-    }
+    public Float getChannel1() { return channel1.get(); }
+
+    public Float getChannel2() { return channel2.get(); }
 
     public Float getChannel3()
     {
