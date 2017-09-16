@@ -165,7 +165,7 @@ public class Controller
         while ((currLine = br.readLine()) != null) {
             if (start) {
                 String split[] = currLine.split(",");
-                fNIRSRecord currentRec = new fNIRSRecord();
+                fNIRSRecord currentRec = new fNIRSRecord(fNIRSRecords.size());
 
                 for (int i = 0; i < 16; i++)
                     if (split[i].contains("NaN"))
@@ -447,7 +447,7 @@ public class Controller
 
 
         while ((currLine = br.readLine()) != null) {
-            EmpaticaRecord currentRec = new EmpaticaRecord();
+            EmpaticaRecord currentRec = new EmpaticaRecord(empaticaRecords.size());
 
             if (start && !currLine.isEmpty())
             {
@@ -632,8 +632,12 @@ public class Controller
 
         printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
 
+        EmpaticaRecord initialHR = syncHRToSession(sessionEpoch);
 
-        printToInfoBox("Found Heart Rate at: " + syncHRToSession(sessionEpoch).getID());
+        if(initialHR != null)
+            printToInfoBox("Found Heart Rate at index " + initialHR.getID());
+        else
+            printToInfoBox("Error: Heart Rate data cannot be synced with session information - Either the Heart Rate sensor's time is incorrect or was not started within the loaded session.");
     }
 
     /**

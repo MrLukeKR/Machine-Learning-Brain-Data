@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 public class fNIRSRecord
 {
-    private static int currentID = 0;
     private int recordID;
 
     private SimpleFloatProperty time = new SimpleFloatProperty();
@@ -34,15 +33,14 @@ public class fNIRSRecord
     ArrayList<SimpleFloatProperty> channels = new ArrayList<>();
     ArrayList<SimpleFloatProperty> averages = new ArrayList<>();
 
-    fNIRSRecord()
+    fNIRSRecord(int id)
     {
         Init();
+        recordID = id;
     }
 
     private void Init()
     {
-        recordID = currentID++;
-
         channels.add(channel1);
         channels.add(channel2);
         channels.add(channel3);
