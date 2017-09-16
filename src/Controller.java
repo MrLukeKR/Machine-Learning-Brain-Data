@@ -89,7 +89,12 @@ public class Controller
     private static int heartRates = 0;
 
     private static long heartRateEpoch;
-    private static long gameplayEpoch = 0;
+    private static long gameplayTimeEpoch = 0;
+    private static long sessionEpoch = 0;
+
+    private static long dateEpoch = 0;
+
+    private static boolean sessionEpochInitialised = false; //Determines whether a session start date has been captured via the various files
 
     private static ObservableList<fNIRSRecord> data = FXCollections.observableArrayList();
     private static List<fNIRSRecord> records = new ArrayList<>();
@@ -207,6 +212,7 @@ public class Controller
         }
 
         importfNIRSTimeButton.setDisable(false);
+        printEndOfFunction();
     }
 
     @FXML private void importfNIRSTimeData(ActionEvent event) throws IOException {
@@ -245,7 +251,7 @@ public class Controller
 
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded TimeStamp data");
-
+        printEndOfFunction();
     }
 
     @FXML private void generateAveragedfNIRSChart(ActionEvent event)
@@ -312,6 +318,8 @@ public class Controller
                     fNIRSChart.getData().addAll(avgSeries);
                     progressBar.setProgress(0);
                 });
+
+            printEndOfFunction();
         }).start();
     }
 
@@ -379,7 +387,7 @@ public class Controller
                     fNIRSChart.getData().addAll(rawSeries);
                     progressBar.setProgress(0);
                 });
-
+            printEndOfFunction();
             }).start();
     }
 
@@ -392,16 +400,23 @@ public class Controller
         });
     }
 
+    private void printEndOfFunction()
+    {
+        printToInfoBox("------------------------------------");
+    }
+
     @FXML
     private void stepDetectfNIRS()
     {
         printToInfoBox("Processing Raw fNIRS: Detecting Steps");
+        printEndOfFunction();
     }
 
     @FXML
     private void stepDetectAveragedfNIRS()
     {
         printToInfoBox("Processing Averaged fNIRS: Detecting Steps");
+        printEndOfFunction();
     }
 
     @FXML
@@ -449,9 +464,11 @@ public class Controller
 
                 long timeRemainder = msEpoch % (24 * 60 * 60 * 1000);
 
-                gameplayEpoch += msEpoch - timeRemainder; // Add the Date @ midnight to the pre-existing time-only epoch
+                dateEpoch = msEpoch - timeRemainder;
 
-                printToInfoBox("Gameplay Epoch set to " + gameplayEpoch);
+                updateSessionStartTime();
+
+                printToInfoBox("Date Epoch set to " + dateEpoch);
 
             }
             else if (count == 1)
@@ -469,12 +486,14 @@ public class Controller
 
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Heart Rate data");
+        printEndOfFunction();
     }
 
     @FXML
     private void exportBWF()
     {
 
+        printEndOfFunction();
     }
 
     @FXML
@@ -515,8 +534,6 @@ public class Controller
                 Date epochToDate = new Date(msEpoch);
                 printToInfoBox("Epoch: " + epoch + " (" + dateFormat.format(epochToDate) + ")");
                 empaticaStartTime.setText(dateFormat.format(epochToDate));
-
-
             }
             else if (count == 1)
                 printToInfoBox("Sample rate is: " +  Float.valueOf(currLine).intValue() + "Hz");
@@ -533,6 +550,7 @@ public class Controller
 
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Heart Rate data");
+        printEndOfFunction();
     }
 
     @FXML
@@ -572,15 +590,15 @@ public class Controller
 
                 if(count == 1)
                 {
-                    gameplayStartTime.setText(date); //TODO: Use date from baseline file (or from HR data) and format as a Java.Util.Date
-
                     int hour = Integer.parseInt(split[1]) * 60 * 60;
                     int min = Integer.parseInt(split[2]) * 60;
                     int sec = Integer.parseInt(split[3]);
 
-                    gameplayEpoch += (hour + min + sec) * 1000;
+                    gameplayTimeEpoch = (hour + min + sec) * 1000;
 
-                    printToInfoBox("Gameplay Epoch set to " + gameplayEpoch);
+                    printToInfoBox("Gameplay Epoch set to " + gameplayTimeEpoch);
+
+                    updateSessionStartTime();
                 }
 
                 if(currLevel != level)
@@ -613,5 +631,34 @@ public class Controller
 */
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Gameplay Performance data");
+        printEndOfFunction();
+    }
+
+    private void updateSessionStartTime()
+    {
+        if(dateEpoch == 0 || gameplayTimeEpoch == 0)
+            return;
+
+        sessionEpoch = (dateEpoch + gameplayTimeEpoch);
+        Date sessionTime = new Date(sessionEpoch);
+
+        gameplayStartTime.setText(sessionTime.toString());
+
+        printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
+
+
+        //printToInfoBox("Found Heart Rate at: " + syncHRToSession(sessionEpoch).getTime());
+    }
+
+    /**
+    @return The fNIRS / Heart Rate record containing the same epoch
+     */
+    private fNIRSRecord syncHRToSession(long sessionEpoch)
+    {
+        for(fNIRSRecord record:records)
+            if(record.heartRateEpoch.longValue() == sessionEpoch) //TODO: Migrate logic to use EmpaticaRecord class (since it's easier to link two classes than use redundant copies of HR data)
+                return record;
+
+        return null;
     }
 }
