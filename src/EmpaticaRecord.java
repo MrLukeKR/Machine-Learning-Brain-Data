@@ -9,7 +9,7 @@ public class EmpaticaRecord
     SimpleLongProperty heartRateEpoch = new SimpleLongProperty();
     SimpleFloatProperty heartRate = new SimpleFloatProperty();
 
-    ArrayList<SimpleFloatProperty> heartRates = new ArrayList<>();
+    private ArrayList<SimpleFloatProperty> heartRates = new ArrayList<>();
 
     EmpaticaRecord()
     {
@@ -22,7 +22,7 @@ public class EmpaticaRecord
         Init();
     }
 
-    void Init()
+    private void Init()
     {
         heartRateEpoch.add(heartRate);
         heartRates.add(heartRate);
@@ -33,4 +33,8 @@ public class EmpaticaRecord
     public Long getHeartRateEpoch()  { return heartRateEpoch.get(); }
 
     public Float getHeartRate()  { return heartRate.get(); }
+
+    public void setID(int ID) {
+        this.recordID = ID;
+    }
 }

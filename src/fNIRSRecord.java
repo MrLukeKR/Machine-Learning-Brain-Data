@@ -1,5 +1,4 @@
 import javafx.beans.property.SimpleFloatProperty;
-import javafx.beans.property.SimpleLongProperty;
 
 import java.util.ArrayList;
 
@@ -7,6 +6,7 @@ public class fNIRSRecord
 {
     private int recordID;
 
+    private SimpleFloatProperty epoch = new SimpleFloatProperty();
     private SimpleFloatProperty time = new SimpleFloatProperty();
     private SimpleFloatProperty channel1 = new SimpleFloatProperty();
     private SimpleFloatProperty channel2 = new SimpleFloatProperty();
@@ -64,7 +64,10 @@ public class fNIRSRecord
         averages.add(average2);
         averages.add(average3);
         averages.add(average4);
+    }
 
+    public Float getEpoch() {
+        return epoch.get();
     }
 
     public Float getTime() { return time.get(); }

@@ -6,19 +6,25 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.chart.*;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.*;
-import java.util.Date;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -44,6 +50,8 @@ public class Controller
     @FXML private Button generateGraphButton;
     @FXML private Button generateAveragedGraphButton;
     @FXML private Button linkEmpaticaToPerformanceButton;
+    @FXML
+    private Button importGameplayDataButton;
 
     @FXML private TableView<fNIRSRecord> fNIRSSpreadsheet;
     @FXML private TableColumn<fNIRSRecord, Float> timeCol;
@@ -80,6 +88,10 @@ public class Controller
     @FXML private Label gameplayStartTime;
 
     @FXML private LineChart<Float, Float> fNIRSChart;
+    @FXML
+    private NumberAxis fNIRSxAxis;
+    @FXML
+    private NumberAxis fNIRSyAxis;
 
     @FXML private ProgressBar progressBar;
 
@@ -137,19 +149,24 @@ public class Controller
             hrCol.setCellValueFactory(new PropertyValueFactory<>("heartRate"));
             hrEpochCol.setCellValueFactory(new PropertyValueFactory<>("heartRateEpoch"));
 
-
             setup = true;
         }
+
+        printToInfoBox("Importing fNIRS Hemoglobin Data");
 
         File file;
 
         FileChooser fc = new FileChooser();
-        fc.setTitle("Import fNIRS Haemaglobin Data");
+        fc.setTitle("Import fNIRS Hemoglobin Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("fNIRS Block CSV", "*Block*.csv"));
+
         file = fc.showOpenDialog(stage);
 
-        if(!file.exists())
+        if (file == null || !file.exists()) {
+            printToInfoBox("Error: File not found");
+            printEndOfFunction();
             return;
+        }
 
         importfNIRSTimeButton.setDisable(true);
         fNIRSRecords.clear();
@@ -223,10 +240,14 @@ public class Controller
         FileChooser fc = new FileChooser();
         fc.setTitle("Import fNIRS Time Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("fNIRS Timestamp CSV", "*Time*.csv"));
-        file = fc.showOpenDialog(stage).getAbsoluteFile();
 
-        if(!file.exists())
+        file = fc.showOpenDialog(stage);
+
+        if (file == null || !file.exists()) {
+            printToInfoBox("Error: File not found");
+            printEndOfFunction();
             return;
+        }
 
         times = 0;
 
@@ -276,7 +297,7 @@ public class Controller
                 for (fNIRSRecord record : fNIRSRecords)
                     for (int i = 0; i < 4; i++) {
                         if (Float.isFinite(record.averages.get(i).getValue()))
-                            avgSeries.get(i).getData().add(new XYChart.Data(record.getTime().toString(), record.averages.get(i).getValue())); //TODO: Find the correct casting to allow <Float, Float> (it is a category axis by default)
+                            avgSeries.get(i).getData().add(new XYChart.Data<>(record.getTime(), record.averages.get(i).getValue()));
                         progressBar.setProgress(progressBar.getProgress() + 0.5 / (fNIRSRecords.size() * 4));
                     }
 
@@ -304,12 +325,15 @@ public class Controller
 
                 int j = 0;
 
-                while (j < avgSeries.size()) {
+            while (j < avgSeries.size()) {
                     if (avgSeries.get(j).getData().size() == 0)
                         avgSeries.remove(j);
                     else
                         j++;
                 }
+
+
+            realignfNIRSChart();
 
                 printToInfoBox("Generating Line Chart");
 
@@ -346,7 +370,7 @@ public class Controller
                 for (fNIRSRecord record : fNIRSRecords)
                     for (int i = 0; i < 16; i++) {
                         if (Float.isFinite(record.channels.get(i).getValue()))
-                            rawSeries.get(i).getData().add(new XYChart.Data(record.getTime().toString(), record.channels.get(i).getValue()));
+                            rawSeries.get(i).getData().add(new XYChart.Data<>(record.getTime(), record.channels.get(i).getValue()));
                         progressBar.setProgress(progressBar.getProgress() + 0.5 / (fNIRSRecords.size() * 16));
                     }
 
@@ -382,13 +406,21 @@ public class Controller
 
                 printToInfoBox("Generating Line Chart");
 
+            realignfNIRSChart();
+
                 Platform.runLater(() ->
                 {
                     fNIRSChart.getData().addAll(rawSeries);
                     progressBar.setProgress(0);
                 });
+
             printEndOfFunction();
             }).start();
+    }
+
+    private void realignfNIRSChart() {
+        fNIRSxAxis.setLowerBound(fNIRSRecords.get(0).getTime());
+        fNIRSxAxis.setUpperBound(fNIRSRecords.get(fNIRSRecords.size() - 1).getTime());
     }
 
     private void printToInfoBox(String string)
@@ -428,12 +460,17 @@ public class Controller
         FileChooser fc = new FileChooser();
         fc.setTitle("Import Empatica Heart Rate Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Empatica HR CSV", "HR.csv"));
-        file = fc.showOpenDialog(stage).getAbsoluteFile();
 
-        if(!file.exists())
+        file = fc.showOpenDialog(stage);
+
+        if (file == null || !file.exists()) {
+            printToInfoBox("Error: File not found");
+            printEndOfFunction();
             return;
+        }
 
         heartRates = 0;
+        empaticaRecords.clear();
 
         FileReader fr       = new FileReader(file);
         BufferedReader br   = new BufferedReader(fr);
@@ -444,7 +481,6 @@ public class Controller
         int count = 0;
 
         long epoch = 0;
-
 
         while ((currLine = br.readLine()) != null) {
             EmpaticaRecord currentRec = new EmpaticaRecord(empaticaRecords.size());
@@ -461,7 +497,7 @@ public class Controller
             else if (count == 0)
             {
                 epoch = Float.valueOf(currLine).longValue();
-                long msEpoch = epoch * 1000l;
+                long msEpoch = epoch * 1000L;
                 Date epochToDate = new Date(msEpoch);
                 printToInfoBox("Epoch: " + epoch + " (" + dateFormat.format(epochToDate) + ")");
                 empaticaStartTime.setText(dateFormat.format(epochToDate));
@@ -506,17 +542,21 @@ public class Controller
 
     @FXML
     private void importSubjectiveData() throws IOException {
-        printToInfoBox("Importing Subjective Workload Rating Data");
+      /*  printToInfoBox("Importing Subjective Workload Rating Data");
 
         File file;
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Import Subjective Workload Rating Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Subjective Data Excel Spreadsheet", "Subjective_ratings*.xlsx"));
-        file = fc.showOpenDialog(stage).getAbsoluteFile();
 
-        if(!file.exists())
+        file = fc.showOpenDialog(stage);
+
+        if (file == null || !file.exists()) {
+            printToInfoBox("Error: File not found");
+            printEndOfFunction();
             return;
+        }
 
         FileReader fr       = new FileReader(file);
         BufferedReader br   = new BufferedReader(fr);
@@ -539,6 +579,7 @@ public class Controller
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Subjective Workload Rating data");
         printEndOfFunction();
+        */
     }
 
     @FXML
@@ -550,10 +591,14 @@ public class Controller
         FileChooser fc = new FileChooser();
         fc.setTitle("Import Gameplay Performance Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Performance Log CSV", "performance_log_Participant_*.csv"));
-        file = fc.showOpenDialog(stage).getAbsoluteFile();
 
-        if(!file.exists())
+        file = fc.showOpenDialog(stage);
+
+        if (file == null || !file.exists()) {
+            printToInfoBox("Error: File not found");
+            printEndOfFunction();
             return;
+        }
 
         //TODO: Increment no. of fNIRSRecords (if count of performance log data is important)
 
@@ -608,11 +653,7 @@ public class Controller
 
         br.close();
         fr.close();
-/*
-        Integer t = new Integer(heartRates);
 
-        hrCount .setText(t.toString());
-*/
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Gameplay Performance data");
         printEndOfFunction();
@@ -626,35 +667,35 @@ public class Controller
             return;
 
         sessionEpoch = (dateEpoch + gameplayTimeEpoch);
-        Date sessionTime = new Date(sessionEpoch * 1000l);
+        Date sessionTime = new Date(sessionEpoch * 1000L);
 
-        gameplayStartTime.setText(dateFormat.format(sessionTime).toString());
+        gameplayStartTime.setText(dateFormat.format(sessionTime));
 
-        printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
+        printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + dateFormat.format(sessionTime));
     }
 
     @FXML
     private void linkEmpaticaToPerformance()
     {
         printToInfoBox("Syncing Imported Data");
-        EmpaticaRecord initialHR = findHRSyncPoint(sessionEpoch);
 
-        if(initialHR != null)
-            printToInfoBox("Found Heart Rate sync point! (Skipping " + (initialHR.getID() + 1) + " preamble records)") ;
-        else
-        {
-            printToInfoBox("Error: Heart Rate data cannot be synced with session information - " +
-                    "Either the Heart Rate sensor's time is incorrect or was not started within the loaded session.");
-            printEndOfFunction();
-            return;
-        }
+        if (empaticaRecords.get(0).getHeartRateEpoch() != sessionEpoch) {
+            EmpaticaRecord initialHR = findHRSyncPoint(sessionEpoch);
 
-        printToInfoBox("\tHR Record " + initialHR.getID() + " Time:\r\n\t\t"
-                + initialHR.getHeartRateEpoch() + " -> " + dateFormat.format(new Date(initialHR.getHeartRateEpoch() * 1000)));
-        printToInfoBox("\tSession Start Time:\r\n\t\t"
-                + sessionEpoch + " -> " + dateFormat.format(new Date(sessionEpoch * 1000)));
+            if (initialHR != null) {
+                printToInfoBox("Found Heart Rate sync point! (Skipping " + initialHR.getID() + " preamble records)");
 
-        syncHRtoSession(initialHR.getID() + 1);
+                printToInfoBox("\tHR Record " + initialHR.getID() + " Time:\r\n\t\t"
+                        + initialHR.getHeartRateEpoch() + " -> " + dateFormat.format(new Date(initialHR.getHeartRateEpoch() * 1000)));
+                printToInfoBox("\tSession Start Time:\r\n\t\t"
+                        + sessionEpoch + " -> " + dateFormat.format(new Date(sessionEpoch * 1000)));
+
+                syncHRtoSession(initialHR.getID());
+            } else
+                printToInfoBox("Error: Heart Rate data cannot be synced with session information - " +
+                        "Either the Heart Rate sensor's time is incorrect or was not started within the loaded session.");
+        } else
+            printToInfoBox("Already synchronised!");
 
         printEndOfFunction();
     }
@@ -669,12 +710,34 @@ public class Controller
         return empaticaRecords.get((int)id);
     }
 
-    private void syncHRtoSession(long amount)
+    private void syncHRtoSession(long id)
     {
-        empaticaRecords.removeIf(empaticaRecord -> empaticaRecord.getID() < amount);
+        empaticaRecords.removeIf(empaticaRecord -> empaticaRecord.getID() < id);
 
         empaticaStartTime.setText(dateFormat.format(new Date(empaticaRecords.get(0).getHeartRateEpoch() * 1000)));
+        hrCount.setText(String.valueOf(empaticaRecords.size()));
 
-        printToInfoBox("Removed " + amount + " out-of-sync Empatica records");
+        checkSynchronisation(); //TODO: Migrate this to a "OnTextChanged" event
+
+        printToInfoBox("Removed " + id + " out-of-sync Empatica records");
+
+        int newID = 0;
+
+        for (EmpaticaRecord record : empaticaRecords)
+            record.setID(newID++);
+
+        printToInfoBox("Re-aligned record ID numbers");
+    }
+
+    private void checkSynchronisation() {
+        if (empaticaRecords.size() > 0 && empaticaRecords.get(0).getHeartRateEpoch() == sessionEpoch)
+            empaticaStartTime.setTextFill(Color.GREEN);
+        else
+            empaticaStartTime.setTextFill(Color.RED);
+
+        if (fNIRSRecords.size() > 0 && fNIRSRecords.get(0).getEpoch() == sessionEpoch)
+            fNIRSStartTime.setTextFill(Color.GREEN);
+        else
+            fNIRSStartTime.setTextFill(Color.RED);
     }
 }
