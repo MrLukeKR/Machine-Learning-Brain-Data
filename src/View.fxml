@@ -142,7 +142,7 @@
                                        <content>
                                           <VBox prefHeight="62.0" prefWidth="278.0" spacing="5.0">
                                              <children>
-                                                <Button fx:id="linkEmpaticaTofNIRS" disable="true" mnemonicParsing="false" onAction="#exportBWF" prefHeight="25.0" prefWidth="260.0" text="Link Empatica to fNIRS" textFill="#ff9000" />
+                                                <Button fx:id="linkEmpaticaToPerformanceButton" disable="true" mnemonicParsing="false" onAction="#linkEmpaticaToPerformance" prefHeight="25.0" prefWidth="260.0" text="Sync Imported Data" textFill="#ff9000" />
                                                 <Button fx:id="exportBWFButton" disable="true" mnemonicParsing="false" onAction="#exportBWF" prefHeight="25.0" prefWidth="260.0" text="Export to .bwf" textFill="BLUE" />
                                              </children>
                                              <opaqueInsets>

@@ -43,6 +43,7 @@ public class Controller
     @FXML private Button importSubjectiveDataButton;
     @FXML private Button generateGraphButton;
     @FXML private Button generateAveragedGraphButton;
+    @FXML private Button linkEmpaticaToPerformanceButton;
 
     @FXML private TableView<fNIRSRecord> fNIRSSpreadsheet;
     @FXML private TableColumn<fNIRSRecord, Float> timeCol;
@@ -151,7 +152,6 @@ public class Controller
             return;
 
         importfNIRSTimeButton.setDisable(true);
-        importEmpaticaHRButton.setDisable(true);
         fNIRSRecords.clear();
         data.clear();
         channels = 0;
@@ -228,7 +228,6 @@ public class Controller
         if(!file.exists())
             return;
 
-        importEmpaticaHRButton.setDisable(false);
         times = 0;
 
         FileReader fr       = new FileReader(file);
@@ -494,6 +493,8 @@ public class Controller
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Heart Rate data");
         printEndOfFunction();
+
+        linkEmpaticaToPerformanceButton.setDisable(!sessionEpochInitialised);
     }
 
     @FXML
@@ -598,10 +599,6 @@ public class Controller
                         printToInfoBox("");
                     }
                 }
-
-
-                //fNIRSRecords.get(heartRates++).heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
-
             }
             else if (count == 0)
                 start = true;
@@ -619,39 +616,65 @@ public class Controller
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Gameplay Performance data");
         printEndOfFunction();
+
+        linkEmpaticaToPerformanceButton.setDisable(!sessionEpochInitialised);
     }
 
     private void updateSessionStartTime()
     {
-        if(dateEpoch == 0 || gameplayTimeEpoch == 0)
+        if(!(sessionEpochInitialised = !(dateEpoch == 0 || gameplayTimeEpoch == 0)))
             return;
 
         sessionEpoch = (dateEpoch + gameplayTimeEpoch);
         Date sessionTime = new Date(sessionEpoch * 1000l);
 
-        gameplayStartTime.setText(sessionTime.toString());
+        gameplayStartTime.setText(dateFormat.format(sessionTime).toString());
 
         printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
     }
 
     @FXML
-    private void linkHRTofNIRS()
+    private void linkEmpaticaToPerformance()
     {
-        EmpaticaRecord initialHR = syncHRToSession(sessionEpoch);
+        printToInfoBox("Syncing Imported Data");
+        EmpaticaRecord initialHR = findHRSyncPoint(sessionEpoch);
 
         if(initialHR != null)
-            printToInfoBox("Found Heart Rate at index " + initialHR.getID());
+            printToInfoBox("Found Heart Rate sync point! (Skipping " + (initialHR.getID() + 1) + " preamble records)") ;
         else
-            printToInfoBox("Error: Heart Rate data cannot be synced with session information - Either the Heart Rate sensor's time is incorrect or was not started within the loaded session.");
+        {
+            printToInfoBox("Error: Heart Rate data cannot be synced with session information - " +
+                    "Either the Heart Rate sensor's time is incorrect or was not started within the loaded session.");
+            printEndOfFunction();
+            return;
+        }
+
+        printToInfoBox("\tHR Record " + initialHR.getID() + " Time:\r\n\t\t"
+                + initialHR.getHeartRateEpoch() + " -> " + dateFormat.format(new Date(initialHR.getHeartRateEpoch() * 1000)));
+        printToInfoBox("\tSession Start Time:\r\n\t\t"
+                + sessionEpoch + " -> " + dateFormat.format(new Date(sessionEpoch * 1000)));
+
+        syncHRtoSession(initialHR.getID() + 1);
+
+        printEndOfFunction();
     }
 
     /**
     @return The fNIRS / Heart Rate record containing the same epoch
      */
-    private EmpaticaRecord syncHRToSession(long sessionEpoch)
+    private EmpaticaRecord findHRSyncPoint(long sessionEpoch)
     {
         long id = sessionEpoch - empaticaRecords.get(0).getHeartRateEpoch();
 
         return empaticaRecords.get((int)id);
+    }
+
+    private void syncHRtoSession(long amount)
+    {
+        empaticaRecords.removeIf(empaticaRecord -> empaticaRecord.getID() < amount);
+
+        empaticaStartTime.setText(dateFormat.format(new Date(empaticaRecords.get(0).getHeartRateEpoch() * 1000)));
+
+        printToInfoBox("Removed " + amount + " out-of-sync Empatica records");
     }
 }
