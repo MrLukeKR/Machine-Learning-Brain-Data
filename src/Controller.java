@@ -88,11 +88,11 @@ public class Controller
     private static int times = 0;
     private static int heartRates = 0;
 
-    private static long heartRateEpoch = 0l;
-    private static long gameplayTimeEpoch = 0l;
-    private static long sessionEpoch = 0l;
+    private static long heartRateEpoch = 0L;
+    private static long gameplayTimeEpoch = 0L;
+    private static long sessionEpoch = 0L;
 
-    private static long dateEpoch = 0l;
+    private static long dateEpoch = 0L;
 
     private static boolean sessionEpochInitialised = false; //Determines whether a session start date has been captured via the various files
 
@@ -135,6 +135,7 @@ public class Controller
 
             hrCol.setCellValueFactory(new PropertyValueFactory<>("heartRate"));
             hrEpochCol.setCellValueFactory(new PropertyValueFactory<>("heartRateEpoch"));
+
 
             setup = true;
         }
@@ -631,7 +632,11 @@ public class Controller
         gameplayStartTime.setText(sessionTime.toString());
 
         printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
+    }
 
+    @FXML
+    private void linkHRTofNIRS()
+    {
         EmpaticaRecord initialHR = syncHRToSession(sessionEpoch);
 
         if(initialHR != null)

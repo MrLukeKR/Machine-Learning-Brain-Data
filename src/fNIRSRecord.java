@@ -33,6 +33,8 @@ public class fNIRSRecord
     ArrayList<SimpleFloatProperty> channels = new ArrayList<>();
     ArrayList<SimpleFloatProperty> averages = new ArrayList<>();
 
+    private EmpaticaRecord empaticaRecord = new EmpaticaRecord();
+
     fNIRSRecord(int id)
     {
         Init();
@@ -68,6 +70,8 @@ public class fNIRSRecord
     public Float getTime() { return time.get(); }
 
     public void setTime(SimpleFloatProperty time) { this.time = time; }
+
+    public void linkEmpaticaRecord(EmpaticaRecord record){ empaticaRecord = record; }
 
     public int getID() { return recordID; }
 
@@ -149,4 +153,8 @@ public class fNIRSRecord
     public Float getAverage3()  { return average3.get(); }
 
     public Float getAverage4()  { return average4.get(); }
+
+    public Float getHeartRate() { return empaticaRecord.getHeartRate(); }
+
+    public Long getHeartRateEpoch() { return empaticaRecord.getHeartRateEpoch(); }
 }
