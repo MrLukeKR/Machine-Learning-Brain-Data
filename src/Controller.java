@@ -88,16 +88,17 @@ public class Controller
     private static int times = 0;
     private static int heartRates = 0;
 
-    private static long heartRateEpoch;
-    private static long gameplayTimeEpoch = 0;
-    private static long sessionEpoch = 0;
+    private static long heartRateEpoch = 0l;
+    private static long gameplayTimeEpoch = 0l;
+    private static long sessionEpoch = 0l;
 
-    private static long dateEpoch = 0;
+    private static long dateEpoch = 0l;
 
     private static boolean sessionEpochInitialised = false; //Determines whether a session start date has been captured via the various files
 
     private static ObservableList<fNIRSRecord> data = FXCollections.observableArrayList();
-    private static List<fNIRSRecord> records = new ArrayList<>();
+    private static List<fNIRSRecord> fNIRSRecords = new ArrayList<>();
+    private static List<EmpaticaRecord> empaticaRecords = new ArrayList<>();
 
     @FXML
     private void handleCloseButtonAction(ActionEvent event)
@@ -150,7 +151,7 @@ public class Controller
 
         importfNIRSTimeButton.setDisable(true);
         importEmpaticaHRButton.setDisable(true);
-        records.clear();
+        fNIRSRecords.clear();
         data.clear();
         channels = 0;
 
@@ -165,7 +166,6 @@ public class Controller
             if (start) {
                 String split[] = currLine.split(",");
                 fNIRSRecord currentRec = new fNIRSRecord();
-                currentRec.Init();
 
                 for (int i = 0; i < 16; i++)
                     if (split[i].contains("NaN"))
@@ -177,7 +177,7 @@ public class Controller
                     for (String str : split)
                         if (!str.contains("NaN"))
                             channels++;
-                records.add(currentRec);
+                fNIRSRecords.add(currentRec);
                 data.add(currentRec);
             }
 
@@ -196,14 +196,14 @@ public class Controller
         fr.close();
 
         channelCount.setText(String.valueOf(channels));
-        recordCount.setText(String.valueOf(records.size()));
+        recordCount.setText(String.valueOf(fNIRSRecords.size()));
 
         printToInfoBox("Loaded fNIRS data");
         progressBar.setProgress(0);
 
         printToInfoBox("Calculating 4-Cluster Averages");
 
-        for(fNIRSRecord record : records)
+        for(fNIRSRecord record : fNIRSRecords)
         {
             record.average1.set((record.getChannel1() + record.getChannel2() + record.getChannel3() + record.getChannel4()) / 4);
             record.average2.set((record.getChannel5() + record.getChannel6() + record.getChannel7() + record.getChannel8()) / 4);
@@ -239,7 +239,7 @@ public class Controller
 
         while ((currLine = br.readLine()) != null) {
             if (start && !currLine.isEmpty())
-                records.get(times++).setTime(new SimpleFloatProperty(Float.parseFloat(currLine)));
+                fNIRSRecords.get(times++).setTime(new SimpleFloatProperty(Float.parseFloat(currLine)));
             if (currLine.split(",")[0].contains("Time"))
                 start = true;
         }
@@ -273,11 +273,11 @@ public class Controller
                 for (int i = 0; i < 4; i++)
                     avgSeries.add(new XYChart.Series<>());
 
-                for (fNIRSRecord record : records)
+                for (fNIRSRecord record : fNIRSRecords)
                     for (int i = 0; i < 4; i++) {
                         if (Float.isFinite(record.averages.get(i).getValue()))
                             avgSeries.get(i).getData().add(new XYChart.Data(record.getTime().toString(), record.averages.get(i).getValue())); //TODO: Find the correct casting to allow <Float, Float> (it is a category axis by default)
-                        progressBar.setProgress(progressBar.getProgress() + 0.5 / (records.size() * 4));
+                        progressBar.setProgress(progressBar.getProgress() + 0.5 / (fNIRSRecords.size() * 4));
                     }
 
                 Node node;
@@ -343,11 +343,11 @@ public class Controller
                 for (int i = 0; i < 16; i++)
                     rawSeries.add(new XYChart.Series<>());
 
-                for (fNIRSRecord record : records)
+                for (fNIRSRecord record : fNIRSRecords)
                     for (int i = 0; i < 16; i++) {
                         if (Float.isFinite(record.channels.get(i).getValue()))
                             rawSeries.get(i).getData().add(new XYChart.Data(record.getTime().toString(), record.channels.get(i).getValue()));
-                        progressBar.setProgress(progressBar.getProgress() + 0.5 / (records.size() * 16));
+                        progressBar.setProgress(progressBar.getProgress() + 0.5 / (fNIRSRecords.size() * 16));
                     }
 
                 Node node;
@@ -445,26 +445,32 @@ public class Controller
 
         long epoch = 0;
 
-        while ((currLine = br.readLine()) != null && count <= records.size() * 2 + 2) {
-            if (start && !currLine.isEmpty() && heartRates < records.size())
+
+        while ((currLine = br.readLine()) != null) {
+            EmpaticaRecord currentRec = new EmpaticaRecord();
+
+            if (start && !currLine.isEmpty())
             {
-                //TODO: Sync with fNIRS (1 HR record for every 2 fNIRS records)
-                records.get(heartRates).heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
-                records.get(heartRates++).heartRateEpoch = new SimpleLongProperty(epoch++);
+                //TODO: Sync with fNIRS (1 HR record for every 2 fNIRS fNIRSRecords)
+                currentRec.heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
+                currentRec.heartRateEpoch = new SimpleLongProperty(epoch++);
+
+                empaticaRecords.add(currentRec);
+                heartRates++;
             }
             else if (count == 0)
             {
                 epoch = Float.valueOf(currLine).longValue();
-                long msEpoch = epoch * 1000;
+                long msEpoch = epoch * 1000l;
                 Date epochToDate = new Date(msEpoch);
                 printToInfoBox("Epoch: " + epoch + " (" + dateFormat.format(epochToDate) + ")");
                 empaticaStartTime.setText(dateFormat.format(epochToDate));
 
-                heartRateEpoch = msEpoch;
+                heartRateEpoch = epoch;
 
-                long timeRemainder = msEpoch % (24 * 60 * 60 * 1000);
+                long timeRemainder = epoch % (24 * 60 * 60);
 
-                dateEpoch = msEpoch - timeRemainder;
+                dateEpoch = epoch - timeRemainder;
 
                 updateSessionStartTime();
 
@@ -510,8 +516,6 @@ public class Controller
         if(!file.exists())
             return;
 
-        heartRates = 0;
-
         FileReader fr       = new FileReader(file);
         BufferedReader br   = new BufferedReader(fr);
 
@@ -520,25 +524,9 @@ public class Controller
         boolean start = false;
         int count = 0;
 
-        while ((currLine = br.readLine()) != null && count <= records.size() * 2 + 2)
+        while ((currLine = br.readLine()) != null)
         {
-            if (start && !currLine.isEmpty())
-            {
-                records.get(heartRates++).heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
-                count++;
-            }
-            else if (count == 0)
-            {
-                long epoch = Float.valueOf(currLine).longValue();
-                long msEpoch = epoch * 1000;
-                Date epochToDate = new Date(msEpoch);
-                printToInfoBox("Epoch: " + epoch + " (" + dateFormat.format(epochToDate) + ")");
-                empaticaStartTime.setText(dateFormat.format(epochToDate));
-            }
-            else if (count == 1)
-                printToInfoBox("Sample rate is: " +  Float.valueOf(currLine).intValue() + "Hz");
-            else if(count == 2)
-                start = true;
+            //Do file logic
 
             count++;
         }
@@ -546,10 +534,8 @@ public class Controller
         br.close();
         fr.close();
 
-        hrCount .setText(String.valueOf(heartRates));
-
         fNIRSSpreadsheet.refresh();
-        printToInfoBox("Loaded Heart Rate data");
+        printToInfoBox("Loaded Subjective Workload Rating data");
         printEndOfFunction();
     }
 
@@ -567,7 +553,7 @@ public class Controller
         if(!file.exists())
             return;
 
-        //TODO: Increment no. of records (if count of performance log data is important)
+        //TODO: Increment no. of fNIRSRecords (if count of performance log data is important)
 
         FileReader fr       = new FileReader(file);
         BufferedReader br   = new BufferedReader(fr);
@@ -577,7 +563,7 @@ public class Controller
         boolean start = false;
         int count = 0;
         String split[];
-        String date = null;
+        String date;
         int level = 0;
 
         while ((currLine = br.readLine()) != null)
@@ -594,7 +580,7 @@ public class Controller
                     int min = Integer.parseInt(split[2]) * 60;
                     int sec = Integer.parseInt(split[3]);
 
-                    gameplayTimeEpoch = (hour + min + sec) * 1000;
+                    gameplayTimeEpoch = (hour + min + sec);
 
                     printToInfoBox("Gameplay Epoch set to " + gameplayTimeEpoch);
 
@@ -613,7 +599,7 @@ public class Controller
                 }
 
 
-                //records.get(heartRates++).heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
+                //fNIRSRecords.get(heartRates++).heartRate = new SimpleFloatProperty(Float.parseFloat(currLine));
 
             }
             else if (count == 0)
@@ -640,25 +626,23 @@ public class Controller
             return;
 
         sessionEpoch = (dateEpoch + gameplayTimeEpoch);
-        Date sessionTime = new Date(sessionEpoch);
+        Date sessionTime = new Date(sessionEpoch * 1000l);
 
         gameplayStartTime.setText(sessionTime.toString());
 
         printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + sessionTime.toString());
 
 
-        //printToInfoBox("Found Heart Rate at: " + syncHRToSession(sessionEpoch).getTime());
+        printToInfoBox("Found Heart Rate at: " + syncHRToSession(sessionEpoch).getID());
     }
 
     /**
     @return The fNIRS / Heart Rate record containing the same epoch
      */
-    private fNIRSRecord syncHRToSession(long sessionEpoch)
+    private EmpaticaRecord syncHRToSession(long sessionEpoch)
     {
-        for(fNIRSRecord record:records)
-            if(record.heartRateEpoch.longValue() == sessionEpoch) //TODO: Migrate logic to use EmpaticaRecord class (since it's easier to link two classes than use redundant copies of HR data)
-                return record;
+        long id = sessionEpoch - empaticaRecords.get(0).getHeartRateEpoch();
 
-        return null;
+        return empaticaRecords.get((int)id);
     }
 }

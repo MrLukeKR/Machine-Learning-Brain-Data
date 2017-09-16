@@ -5,6 +5,9 @@ import java.util.ArrayList;
 
 public class fNIRSRecord
 {
+    private static int currentID = 0;
+    private int recordID;
+
     private SimpleFloatProperty time = new SimpleFloatProperty();
     private SimpleFloatProperty channel1 = new SimpleFloatProperty();
     private SimpleFloatProperty channel2 = new SimpleFloatProperty();
@@ -28,15 +31,18 @@ public class fNIRSRecord
     SimpleFloatProperty average3 = new SimpleFloatProperty();
     SimpleFloatProperty average4 = new SimpleFloatProperty();
 
-    SimpleLongProperty heartRateEpoch = new SimpleLongProperty();
-    SimpleFloatProperty heartRate = new SimpleFloatProperty();
-
     ArrayList<SimpleFloatProperty> channels = new ArrayList<>();
     ArrayList<SimpleFloatProperty> averages = new ArrayList<>();
-    ArrayList<SimpleFloatProperty> heartRates = new ArrayList<>();
 
-    void Init()
+    fNIRSRecord()
     {
+        Init();
+    }
+
+    private void Init()
+    {
+        recordID = currentID++;
+
         channels.add(channel1);
         channels.add(channel2);
         channels.add(channel3);
@@ -59,13 +65,13 @@ public class fNIRSRecord
         averages.add(average3);
         averages.add(average4);
 
-        heartRateEpoch.add(heartRate);
-        heartRates.add(heartRate);
     }
 
     public Float getTime() { return time.get(); }
 
     public void setTime(SimpleFloatProperty time) { this.time = time; }
+
+    public int getID() { return recordID; }
 
     public Float getChannel1() { return channel1.get(); }
 
@@ -145,8 +151,4 @@ public class fNIRSRecord
     public Float getAverage3()  { return average3.get(); }
 
     public Float getAverage4()  { return average4.get(); }
-
-    public Long getHeartRateEpoch()  { return heartRateEpoch.get(); }
-
-    public Float getHeartRate()  { return heartRate.get(); }
 }
