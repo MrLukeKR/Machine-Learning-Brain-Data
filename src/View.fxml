@@ -43,10 +43,10 @@
                                              <children>
                                                 <Button fx:id="importfNIRSDataButton" mnemonicParsing="false" onAction="#importfNIRSData" prefHeight="25.0" prefWidth="260.0" text="Import fNIRS Data" textFill="BLUE" />
                                                 <Button fx:id="importfNIRSTimeButton" disable="true" mnemonicParsing="false" onAction="#importfNIRSTimeData" prefHeight="25.0" prefWidth="260.0" text="Import Timestamp Data" textFill="BLUE" />
-                                                <Button fx:id="importEmpaticaHRButton" disable="true" mnemonicParsing="false" onAction="#importEmpaticaHR" prefHeight="25.0" prefWidth="260.0" text="Import Empatica Heart Rate Data" textFill="MAGENTA" />
+                                                <Button fx:id="importEmpaticaHRButton" mnemonicParsing="false" onAction="#importEmpaticaHR" prefHeight="25.0" prefWidth="260.0" text="Import Empatica Heart Rate Data" textFill="MAGENTA" />
                                                 <Button disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="260.0" text="Import Empatica Temperature Data" textFill="MAGENTA" />
                                                 <Button fx:id="importGameplayDataButton" mnemonicParsing="false" onAction="#importGameplayData" prefHeight="25.0" prefWidth="260.0" text="Import Gameplay Performance Log" textFill="#03b508" />
-                                                <Button fx:id="importSubjectiveDataButton" mnemonicParsing="false" onAction="#importSubjectiveData" prefHeight="25.0" prefWidth="260.0" text="Import Subjective Rating Data" textFill="#03b508" />
+                                                <Button fx:id="importSubjectiveDataButton" disable="true" mnemonicParsing="false" onAction="#importSubjectiveData" prefHeight="25.0" prefWidth="260.0" text="Import Subjective Rating Data" textFill="#03b508" />
                                              </children>
                                              <opaqueInsets>
                                                 <Insets />
@@ -122,18 +122,6 @@
                                           </VBox>
                                        </content>
                                     </TitledPane>
-                                    <TitledPane animated="false" collapsible="false" prefHeight="76.0" prefWidth="280.0" text="Export Files">
-                                       <content>
-                                          <VBox prefHeight="62.0" prefWidth="278.0" spacing="5.0">
-                                             <children>
-                                                <Button fx:id="exportBWFButton" mnemonicParsing="false" onAction="#exportBWF" prefHeight="25.0" prefWidth="260.0" text="Export to .bwf" textFill="BLUE" />
-                                             </children>
-                                             <opaqueInsets>
-                                                <Insets />
-                                             </opaqueInsets>
-                                          </VBox>
-                                       </content>
-                                    </TitledPane>
                                     <TitledPane animated="false" collapsible="false" prefHeight="310.0" prefWidth="282.0" text="Timestamp Information">
                                        <content>
                                           <VBox prefHeight="200.0" prefWidth="100.0">
@@ -147,6 +135,19 @@
                                                 <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="260.0" text="Gameplay Start Time" textAlignment="CENTER" underline="true" />
                                                 <Label fx:id="gameplayStartTime" contentDisplay="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="20.0" prefWidth="260.0" text="0" />
                                              </children>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                    <TitledPane animated="false" collapsible="false" prefHeight="76.0" prefWidth="280.0" text="Tools">
+                                       <content>
+                                          <VBox prefHeight="62.0" prefWidth="278.0" spacing="5.0">
+                                             <children>
+                                                <Button fx:id="linkEmpaticaTofNIRS" disable="true" mnemonicParsing="false" onAction="#exportBWF" prefHeight="25.0" prefWidth="260.0" text="Link Empatica to fNIRS" textFill="#ff9000" />
+                                                <Button fx:id="exportBWFButton" disable="true" mnemonicParsing="false" onAction="#exportBWF" prefHeight="25.0" prefWidth="260.0" text="Export to .bwf" textFill="BLUE" />
+                                             </children>
+                                             <opaqueInsets>
+                                                <Insets />
+                                             </opaqueInsets>
                                           </VBox>
                                        </content>
                                     </TitledPane>
