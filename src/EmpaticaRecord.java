@@ -5,16 +5,21 @@ import java.util.ArrayList;
 
 public class EmpaticaRecord
 {
-    private int recordID;
+    private int recordID = -1;
     SimpleLongProperty heartRateEpoch = new SimpleLongProperty();
     SimpleFloatProperty heartRate = new SimpleFloatProperty();
 
     ArrayList<SimpleFloatProperty> heartRates = new ArrayList<>();
 
-    EmpaticaRecord(int id)
+    EmpaticaRecord()
     {
         Init();
+    }
+
+    EmpaticaRecord(int id)
+    {
         recordID = id;
+        Init();
     }
 
     void Init()
