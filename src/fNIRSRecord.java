@@ -79,85 +79,66 @@ public class fNIRSRecord
     public int getID() { return recordID; }
 
     public Float getChannel1() { return channel1.get(); }
-
     public Float getChannel2() { return channel2.get(); }
-
     public Float getChannel3()
     {
         return channel3.get();
     }
-
     public Float getChannel4()
     {
         return channel4.get();
     }
-
     public Float getChannel5()
     {
         return channel5.get();
     }
-
     public Float getChannel6()
     {
         return channel6.get();
     }
-
     public Float getChannel7()
     {
         return channel7.get();
     }
-
     public Float getChannel8()
     {
         return channel8.get();
     }
 
-    public Float getChannel9()
-    {
+    public Float getChannel9() {
         return channel9.get();
     }
-
     public Float getChannel10()
     {
         return channel10.get();
     }
-
     public Float getChannel11()
     {
         return channel11.get();
     }
-
     public Float getChannel12()
     {
         return channel12.get();
     }
-
     public Float getChannel13()
     {
         return channel13.get();
     }
-
     public Float getChannel14()
     {
         return channel14.get();
     }
-
     public Float getChannel15()
     {
         return channel15.get();
     }
-
     public Float getChannel16() { return channel16.get(); }
 
     public Float getAverage1()  { return average1.get(); }
-
     public Float getAverage2()  { return average2.get(); }
-
     public Float getAverage3()  { return average3.get(); }
-
     public Float getAverage4()  { return average4.get(); }
 
     public Float getHeartRate() { return empaticaRecord.getHeartRate(); }
-
     public Long getHeartRateEpoch() { return empaticaRecord.getHeartRateEpoch(); }
 }

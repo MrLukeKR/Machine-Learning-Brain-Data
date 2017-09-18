@@ -34,14 +34,15 @@ import static java.lang.System.exit;
 public class Controller
 {
     static private Stage stage;
-    static void setStage(Stage newStage) { stage = newStage; }
+    static private boolean setup = false;
+    static private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ssa", Locale.UK);
 
+    static void setStage(Stage newStage) { stage = newStage; }
     private ArrayList<XYChart.Series<Float, Float>> rawSeries = new ArrayList<>();
     private ArrayList<XYChart.Series<Float, Float>> avgSeries = new ArrayList<>();
 
-    static private boolean setup = false;
+    private ArrayList<XYChart.Series<Float, Float>> heartrateSeries = new ArrayList<>();
 
-    @FXML private MenuItem closeButton;
     @FXML private TextArea informationTextArea;
     @FXML private Button importfNIRSDataButton;
     @FXML private Button importfNIRSTimeButton;
@@ -49,9 +50,13 @@ public class Controller
     @FXML private Button importSubjectiveDataButton;
     @FXML private Button generateGraphButton;
     @FXML private Button generateAveragedGraphButton;
+    @FXML
+    private Button generateHeartRateGraphButton;
     @FXML private Button linkEmpaticaToPerformanceButton;
     @FXML
-    private Button importGameplayDataButton;
+    private ToggleButton togglefNIRSChartButton;
+    @FXML
+    private ToggleButton toggleHeartRateChartButton;
 
     @FXML private TableView<fNIRSRecord> fNIRSSpreadsheet;
     @FXML private TableColumn<fNIRSRecord, Float> timeCol;
@@ -93,9 +98,16 @@ public class Controller
     @FXML
     private NumberAxis fNIRSyAxis;
 
-    @FXML private ProgressBar progressBar;
+    @FXML
+    private LineChart<Float, Float> heartRateChart;
+    @FXML
+    private NumberAxis heartRatexAxis;
+    @FXML
+    private NumberAxis heartRateyAxis;
 
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.UK);
+    @FXML private ProgressBar progressBar;
+    @FXML
+    private Button importGameplayDataButton;
 
     private static int channels = 0;
     private static int times = 0;
@@ -119,7 +131,7 @@ public class Controller
         exit(1);
     }
 
-    @FXML private void importfNIRSData(ActionEvent event) throws IOException, ParseException {
+    public void initialize() {
         if(!setup) {
             fNIRSSpreadsheet.setItems(data);
 
@@ -149,8 +161,15 @@ public class Controller
             hrCol.setCellValueFactory(new PropertyValueFactory<>("heartRate"));
             hrEpochCol.setCellValueFactory(new PropertyValueFactory<>("heartRateEpoch"));
 
+            togglefNIRSChart();
+            toggleHeartRateChart();
+
             setup = true;
         }
+    }
+
+    @FXML
+    private void importfNIRSData(ActionEvent event) throws IOException, ParseException {
 
         printToInfoBox("Importing fNIRS Hemoglobin Data");
 
@@ -169,6 +188,9 @@ public class Controller
         }
 
         importfNIRSTimeButton.setDisable(true);
+        generateGraphButton.setDisable(true);
+        generateAveragedGraphButton.setDisable(true);
+
         fNIRSRecords.clear();
         data.clear();
         channels = 0;
@@ -221,8 +243,7 @@ public class Controller
 
         printToInfoBox("Calculating 4-Cluster Averages");
 
-        for(fNIRSRecord record : fNIRSRecords)
-        {
+        for(fNIRSRecord record : fNIRSRecords) {
             record.average1.set((record.getChannel1() + record.getChannel2() + record.getChannel3() + record.getChannel4()) / 4);
             record.average2.set((record.getChannel5() + record.getChannel6() + record.getChannel7() + record.getChannel8()) / 4);
             record.average3.set((record.getChannel9() + record.getChannel10() + record.getChannel11() + record.getChannel12()) / 4);
@@ -230,6 +251,9 @@ public class Controller
         }
 
         importfNIRSTimeButton.setDisable(false);
+        generateGraphButton.setDisable(!(times == fNIRSRecords.size()));//TODO: Migrate to separate method
+        generateAveragedGraphButton.setDisable(!(times == fNIRSRecords.size())); //TODO: Migrate to separate method
+
         printEndOfFunction();
     }
 
@@ -271,6 +295,10 @@ public class Controller
         timeCount.setText(String.valueOf(times));
 
         fNIRSSpreadsheet.refresh();
+
+        generateGraphButton.setDisable(!(times == fNIRSRecords.size()));
+        generateAveragedGraphButton.setDisable(!(times == fNIRSRecords.size()));
+
         printToInfoBox("Loaded TimeStamp data");
         printEndOfFunction();
     }
@@ -423,6 +451,24 @@ public class Controller
         fNIRSxAxis.setUpperBound(fNIRSRecords.get(fNIRSRecords.size() - 1).getTime());
     }
 
+    private void realignHRChart() {
+        int currTime = empaticaRecords.get(0).getHeartRateEpoch().intValue();
+        int endTime = empaticaRecords.get(empaticaRecords.size() - 1).getHeartRateEpoch().intValue();
+
+        heartRatexAxis.setLowerBound(0);
+        heartRatexAxis.setUpperBound(endTime - currTime);
+
+        float lowHR = Float.MAX_VALUE, highHR = Float.MIN_VALUE;
+
+        for (EmpaticaRecord record : empaticaRecords) {
+            if (record.getHeartRate() < lowHR) lowHR = record.getHeartRate();
+            if (record.getHeartRate() > highHR) highHR = record.getHeartRate();
+        }
+
+        heartRateyAxis.setLowerBound(lowHR);
+        heartRateyAxis.setUpperBound(highHR);
+    }
+
     private void printToInfoBox(String string)
     {
         Platform.runLater(() ->
@@ -524,13 +570,14 @@ public class Controller
         br.close();
         fr.close();
 
-        hrCount .setText(String.valueOf(heartRates));
+        hrCount.setText(String.valueOf(heartRates));
 
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Heart Rate data");
         printEndOfFunction();
 
         linkEmpaticaToPerformanceButton.setDisable(!sessionEpochInitialised);
+        generateHeartRateGraphButton.setDisable(heartRates == 0);
     }
 
     @FXML
@@ -739,5 +786,82 @@ public class Controller
             fNIRSStartTime.setTextFill(Color.GREEN);
         else
             fNIRSStartTime.setTextFill(Color.RED);
+    }
+
+    @FXML
+    private void generateHeartRateGraph() {
+        printToInfoBox("Generating Heart Rate Graph");
+
+        if (heartRateChart.getData().size() > 0)
+            heartRateChart.getData().remove(0, heartRateChart.getData().size());
+
+        new Thread(() ->
+        {
+            long initTime = empaticaRecords.get(0).getHeartRateEpoch();
+
+
+            if (heartrateSeries.size() > 0)
+                heartrateSeries.clear();
+
+            progressBar.setProgress(0);
+            printToInfoBox("Adding Data Points");
+
+            heartrateSeries.add(new XYChart.Series<>());
+
+            for (EmpaticaRecord record : empaticaRecords) {
+                if (Float.isFinite(record.getHeartRate())) {
+                    float currTime = (int) (record.getHeartRateEpoch() - initTime);
+                    heartrateSeries.get(0).getData().add(new XYChart.Data(currTime, record.getHeartRate()));
+                }
+                progressBar.setProgress(progressBar.getProgress() + 0.5 / empaticaRecords.size());
+            }
+
+            Node node;
+
+            heartrateSeries.get(0).setName("Heart Rate");
+
+            for (XYChart.Data data : heartrateSeries.get(0).getData()) {
+                node = new Rectangle(0, 0);
+                node.setVisible(false);
+                data.setNode(node);
+
+                progressBar.setProgress(progressBar.getProgress() + 0.5 / heartrateSeries.size());
+            }
+
+            int j = 0;
+
+            printToInfoBox("Removing Null Anomalies");
+
+            while (j < heartrateSeries.size()) {
+                if (heartrateSeries.get(j).getData().size() == 0)
+                    heartrateSeries.remove(j);
+                else
+                    j++;
+            }
+
+            printToInfoBox("Generating Line Chart");
+
+            realignHRChart();
+
+            Platform.runLater(() ->
+            {
+                heartRateChart.getData().addAll(heartrateSeries);
+                progressBar.setProgress(0);
+            });
+
+            printEndOfFunction();
+        }).start();
+    }
+
+    @FXML
+    private void togglefNIRSChart() {
+        fNIRSChart.setVisible(togglefNIRSChartButton.isSelected());
+        fNIRSChart.setManaged(togglefNIRSChartButton.isSelected());
+    }
+
+    @FXML
+    private void toggleHeartRateChart() {
+        heartRateChart.setVisible(toggleHeartRateChartButton.isSelected());
+        heartRateChart.setManaged(toggleHeartRateChartButton.isSelected());
     }
 }
