@@ -91,6 +91,8 @@ public class Controller
     @FXML private Label fNIRSStartTime;
     @FXML private Label empaticaStartTime;
     @FXML private Label gameplayStartTime;
+    private static long gameplayStartTimeEpoch = 0L;
+    private static long gameplayEndTimeEpoch = 0L;
 
     @FXML private LineChart<Float, Float> fNIRSChart;
     @FXML
@@ -114,7 +116,10 @@ public class Controller
     private static int heartRates = 0;
 
     private static long heartRateEpoch = 0L;
-    private static long gameplayTimeEpoch = 0L;
+    @FXML
+    private Label gameplayEndTime;
+    @FXML
+    private Label gameplayLength;
     private static long sessionEpoch = 0L;
 
     private static long dateEpoch = 0L;
@@ -173,18 +178,20 @@ public class Controller
 
         printToInfoBox("Importing fNIRS Hemoglobin Data");
 
-        File file;
+        List<File> files;
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Import fNIRS Hemoglobin Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("fNIRS Block CSV", "*Block*.csv"));
 
-        file = fc.showOpenDialog(stage);
+        files = fc.showOpenMultipleDialog(stage);
 
-        if (file == null || !file.exists()) {
-            printToInfoBox("Error: File not found");
-            printEndOfFunction();
-            return;
+        for (File file : files) {
+            if (!file.exists() || file == null) {
+                printToInfoBox("Error: File not found");
+                printEndOfFunction();
+                return;
+            }
         }
 
         importfNIRSTimeButton.setDisable(true);
@@ -195,45 +202,48 @@ public class Controller
         data.clear();
         channels = 0;
 
-        FileReader fr = new FileReader(file);
-        BufferedReader br = new BufferedReader(fr);
+        for (File file : files) {
 
-        String currLine;
+            FileReader fr = new FileReader(file);
+            BufferedReader br = new BufferedReader(fr);
 
-        boolean start = false;
+            String currLine;
 
-        while ((currLine = br.readLine()) != null) {
-            if (start) {
-                String split[] = currLine.split(",");
-                fNIRSRecord currentRec = new fNIRSRecord(fNIRSRecords.size());
+            boolean start = false;
 
-                for (int i = 0; i < 16; i++)
-                    if (split[i].contains("NaN"))
-                        currentRec.channels.get(i).set(NaN);
-                    else
-                        currentRec.channels.get(i).set(Float.parseFloat(split[i]));
+            while ((currLine = br.readLine()) != null) {
+                if (start) {
+                    String split[] = currLine.split(",");
+                    fNIRSRecord currentRec = new fNIRSRecord(fNIRSRecords.size());
 
-                if (channels == 0)
-                    for (String str : split)
-                        if (!str.contains("NaN"))
-                            channels++;
-                fNIRSRecords.add(currentRec);
-                data.add(currentRec);
+                    for (int i = 0; i < 16; i++)
+                        if (split[i].contains("NaN"))
+                            currentRec.channels.get(i).set(NaN);
+                        else
+                            currentRec.channels.get(i).set(Float.parseFloat(split[i]));
+
+                    if (channels == 0)
+                        for (String str : split)
+                            if (!str.contains("NaN"))
+                                channels++;
+                    fNIRSRecords.add(currentRec);
+                    data.add(currentRec);
+                }
+
+                if (currLine.split(",")[0].equals("Date:")) //Don't use 'contains' as the files also contain "ExportDate:"
+                {
+                    DateFormat format = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a", Locale.UK);
+                    Date date = format.parse(currLine.split(",")[1]);
+                    fNIRSStartTime.setText(dateFormat.format(date));
+                }
+
+                if (!start && currLine.split(",")[0].contains("Optode"))
+                    start = true;
             }
 
-            if(currLine.split(",")[0].equals("Date:")) //Don't use 'contains' as the files also contain "ExportDate:"
-            {
-                DateFormat format = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a", Locale.UK);
-                Date date = format.parse(currLine.split(",")[1]);
-                fNIRSStartTime.setText(dateFormat.format(date));
-            }
-
-            if (!start && currLine.split(",")[0].contains("Optode"))
-                start = true;
+            br.close();
+            fr.close();
         }
-
-        br.close();
-        fr.close();
 
         channelCount.setText(String.valueOf(channels));
         recordCount.setText(String.valueOf(fNIRSRecords.size()));
@@ -259,38 +269,43 @@ public class Controller
 
     @FXML private void importfNIRSTimeData(ActionEvent event) throws IOException {
 
-        File file;
+        List<File> files;
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Import fNIRS Time Data");
         fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("fNIRS Timestamp CSV", "*Time*.csv"));
 
-        file = fc.showOpenDialog(stage);
+        files = fc.showOpenMultipleDialog(stage);
 
-        if (file == null || !file.exists()) {
-            printToInfoBox("Error: File not found");
-            printEndOfFunction();
-            return;
+
+        for (File file : files) {
+            if (!file.exists() || file == null) {
+                printToInfoBox("Error: File not found");
+                printEndOfFunction();
+                return;
+            }
         }
 
         times = 0;
 
-        FileReader fr       = new FileReader(file);
-        BufferedReader br   = new BufferedReader(fr);
+        for (File file : files) {
+            FileReader fr = new FileReader(file);
+            BufferedReader br = new BufferedReader(fr);
 
-        String currLine;
+            String currLine;
 
-        boolean start = false;
+            boolean start = false;
 
-        while ((currLine = br.readLine()) != null) {
-            if (start && !currLine.isEmpty())
-                fNIRSRecords.get(times++).setTime(new SimpleFloatProperty(Float.parseFloat(currLine)));
-            if (currLine.split(",")[0].contains("Time"))
-                start = true;
+            while ((currLine = br.readLine()) != null) {
+                if (start && !currLine.isEmpty())
+                    fNIRSRecords.get(times++).setTime(new SimpleFloatProperty(Float.parseFloat(currLine)));
+                if (currLine.split(",")[0].contains("Time"))
+                    start = true;
+            }
+
+            br.close();
+            fr.close();
         }
-
-        br.close();
-        fr.close();
 
         timeCount.setText(String.valueOf(times));
 
@@ -375,10 +390,10 @@ public class Controller
         }).start();
     }
 
-    @FXML private void generatefNIRSChart(ActionEvent event) {
+    @FXML
+    private void generatefNIRSChart(ActionEvent event) {
         printToInfoBox("Generating fNIRS Graph");
-
-                fNIRSChart.setTitle("fNIRS Data");
+        fNIRSChart.setTitle("fNIRS Data");
 
         if(fNIRSChart.getData().size() > 0)
             fNIRSChart.getData().remove(0, fNIRSChart.getData().size());
@@ -441,7 +456,6 @@ public class Controller
                     fNIRSChart.getData().addAll(rawSeries);
                     progressBar.setProgress(0);
                 });
-
             printEndOfFunction();
             }).start();
     }
@@ -554,7 +568,7 @@ public class Controller
 
                 dateEpoch = epoch - timeRemainder;
 
-                updateSessionStartTime();
+                updateSessionTimes();
 
                 printToInfoBox("Date Epoch set to " + dateEpoch);
 
@@ -660,6 +674,8 @@ public class Controller
         String date;
         int level = 0;
 
+        int hour = 0, min = 0, sec = 0;
+
         while ((currLine = br.readLine()) != null)
         {
             split = currLine.split(",");
@@ -668,17 +684,14 @@ public class Controller
             {
                 int currLevel = Integer.parseInt(split[0]);
 
+                hour = Integer.parseInt(split[1]) * 60 * 60;
+                min = Integer.parseInt(split[2]) * 60;
+                sec = Integer.parseInt(split[3]);
+
                 if(count == 1)
                 {
-                    int hour = Integer.parseInt(split[1]) * 60 * 60;
-                    int min = Integer.parseInt(split[2]) * 60;
-                    int sec = Integer.parseInt(split[3]);
-
-                    gameplayTimeEpoch = (hour + min + sec);
-
-                    printToInfoBox("Gameplay Epoch set to " + gameplayTimeEpoch);
-
-                    updateSessionStartTime();
+                    gameplayStartTimeEpoch = (hour + min + sec);
+                    printToInfoBox("Gameplay Epoch set to " + gameplayStartTimeEpoch);
                 }
 
                 if(currLevel != level)
@@ -701,6 +714,10 @@ public class Controller
         br.close();
         fr.close();
 
+        gameplayEndTimeEpoch = (hour + min + sec);
+        printToInfoBox("Gameplay End Epoch set to " + gameplayEndTimeEpoch);
+        updateSessionTimes();
+
         fNIRSSpreadsheet.refresh();
         printToInfoBox("Loaded Gameplay Performance data");
         printEndOfFunction();
@@ -708,17 +725,25 @@ public class Controller
         linkEmpaticaToPerformanceButton.setDisable(!sessionEpochInitialised);
     }
 
-    private void updateSessionStartTime()
+    private void updateSessionTimes()
     {
-        if(!(sessionEpochInitialised = !(dateEpoch == 0 || gameplayTimeEpoch == 0)))
+        if (!(sessionEpochInitialised = !(dateEpoch == 0 || gameplayStartTimeEpoch == 0)))
             return;
 
-        sessionEpoch = (dateEpoch + gameplayTimeEpoch);
+        sessionEpoch = (dateEpoch + gameplayStartTimeEpoch);
         Date sessionTime = new Date(sessionEpoch * 1000L);
+        Date endSessionTime = new Date((dateEpoch + gameplayEndTimeEpoch) * 1000L);
 
         gameplayStartTime.setText(dateFormat.format(sessionTime));
+        gameplayEndTime.setText(dateFormat.format(endSessionTime));
+
+        Long length = (endSessionTime.getTime() - sessionTime.getTime());
+
+        gameplayLength.setText("(" + length / 1000L / 60L + " minutes, " +
+                length / 1000L % 60L + " seconds)");
 
         printToInfoBox("Updated session start time to: " + sessionEpoch + " -> " + dateFormat.format(sessionTime));
+        printToInfoBox("Updated session end time to: " + endSessionTime.getTime() / 1000L + " -> " + dateFormat.format(endSessionTime));
     }
 
     @FXML

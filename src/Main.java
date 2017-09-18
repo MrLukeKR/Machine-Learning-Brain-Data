@@ -22,6 +22,7 @@ public class Main extends Application
             Parent page = FXMLLoader.load(getClass().getResource("View.fxml"));
 
             Scene scene = new Scene(page);
+            //scene.getStylesheets().add("stylesheet.css");
             primaryStage.setScene(scene);
             primaryStage.show();
         }

@@ -89,11 +89,17 @@
                                                      prefHeight="20.0" prefWidth="260.0"/>
                                                 <Separator prefWidth="200.0" />
                                               <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="20.0"
-                                                     prefWidth="260.0" text="Gameplay Start Time" textAlignment="CENTER"
+                                                     prefWidth="260.0" text="Session Time Period" textAlignment="CENTER"
                                                      underline="true"/>
                                               <Label fx:id="gameplayStartTime" alignment="CENTER"
                                                      contentDisplay="CENTER" minHeight="-Infinity" minWidth="260.0"
                                                      prefHeight="20.0" prefWidth="260.0"/>
+                                              <Label fx:id="gameplayEndTime" alignment="CENTER" contentDisplay="CENTER"
+                                                     layoutX="20.0" layoutY="126.0" minHeight="-Infinity"
+                                                     minWidth="260.0" prefHeight="20.0" prefWidth="260.0"/>
+                                              <Label fx:id="gameplayLength" alignment="CENTER" contentDisplay="CENTER"
+                                                     layoutX="20.0" layoutY="166.0" minHeight="-Infinity"
+                                                     minWidth="260.0" prefHeight="20.0" prefWidth="260.0"/>
                                           </VBox>
                                     </TitledPane>
                                     <TitledPane animated="false" collapsible="false" prefHeight="76.0" prefWidth="280.0" text="Tools">

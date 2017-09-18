@@ -1,0 +1,33 @@
+.chart-series-line.series0 { -fx-stroke: #e50004; }
+.chart-series-line.series1 { -fx-stroke: #e24e00; }
+.chart-series-line.series2 { -fx-stroke: #dfa000; }
+.chart-series-line.series3 { -fx-stroke: #cbdd00; }
+.chart-series-line.series4 { -fx-stroke: #78da00; }
+.chart-series-line.series5 { -fx-stroke: #27d800; }
+.chart-series-line.series6 { -fx-stroke: #00d528; }
+.chart-series-line.series7 { -fx-stroke: #00d375; }
+.chart-series-line.series8 { -fx-stroke: #00d0c0; }
+.chart-series-line.series9 { -fx-stroke: #0091ce; }
+.chart-series-line.series10 { -fx-stroke: #0045cb; }
+.chart-series-line.series11 { -fx-stroke: #0500c9; }
+.chart-series-line.series12 { -fx-stroke: #4e00c6; }
+.chart-series-line.series13 { -fx-stroke: #9600c4; }
+.chart-series-line.series14 { -fx-stroke: #c100a7; }
+.chart-series-line.series15 { -fx-stroke: #bf005f; }
+
+.chart-line-symbol.series0 { -fx-background-color: #e50004, white; }
+.chart-line-symbol.series1 { -fx-background-color: #e24e00, white; }
+.chart-line-symbol.series2 { -fx-background-color: #dfa000, white; }
+.chart-line-symbol.series3 { -fx-background-color: #cbdd00, white; }
+.chart-line-symbol.series4 { -fx-background-color: #78da00, white; }
+.chart-line-symbol.series5 { -fx-background-color: #27d800, white; }
+.chart-line-symbol.series6 { -fx-background-color: #00d528, white; }
+.chart-line-symbol.series7 { -fx-background-color: #00d375, white; }
+.chart-line-symbol.series8 { -fx-background-color: #00d0c0, white; }
+.chart-line-symbol.series9 { -fx-background-color: #0091ce, white; }
+.chart-line-symbol.series10 { -fx-background-color: #0045cb, white; }
+.chart-line-symbol.series11 { -fx-background-color: #0500c9, white; }
+.chart-line-symbol.series12 { -fx-background-color: #4e00c6, white; }
+.chart-line-symbol.series13 { -fx-background-color: #9600c4, white; }
+.chart-line-symbol.series14 { -fx-background-color: #c100a7, white; }
+.chart-line-symbol.series15 { -fx-background-color: #bf005f, white; }
