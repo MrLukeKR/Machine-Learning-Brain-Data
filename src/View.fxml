@@ -179,11 +179,12 @@
                            <center>
                                <VBox>
                                    <children>
-                                       <BarChart fx:id="subjectiveRatingChart" barGap="0.0" categoryGap="0.0"
-                                                 legendVisible="false" maxHeight="900.0" minHeight="100.0"
-                                                 prefHeight="900.0" prefWidth="1726.0" title="Subjective Rating">
+                                       <BarChart fx:id="subjectiveRatingChart" animated="false" barGap="0.0"
+                                                 categoryGap="0.0" legendVisible="false" maxHeight="900.0"
+                                                 minHeight="100.0" prefHeight="900.0" prefWidth="1726.0"
+                                                 title="Subjective Rating">
                                            <xAxis>
-                                               <CategoryAxis side="BOTTOM" opacity="0" tickLabelsVisible="false"/>
+                                               <CategoryAxis opacity="0" side="BOTTOM" tickLabelsVisible="false"/>
                                            </xAxis>
                                            <yAxis>
                                                <NumberAxis label="Rating" side="LEFT"/>

@@ -818,6 +818,12 @@ public class Controller
         for (EmpaticaRecord record : empaticaRecords)
             record.setID(newID++);
 
+        int trimEnd = empaticaRecords.size();
+
+
+        empaticaRecords.removeIf(empaticaRecord -> empaticaRecord.getID() >= 39 * 45); //Trim the end:
+        //Total should contain 3 rounds * 13 levels * 45 second intervals
+
         printToInfoBox("Re-aligned record ID numbers");
     }
 
