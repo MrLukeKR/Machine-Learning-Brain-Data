@@ -1,11 +1,13 @@
 import javafx.application.Platform;
 import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -41,7 +43,8 @@ public class Controller
     private ArrayList<XYChart.Series<Float, Float>> rawSeries = new ArrayList<>();
     private ArrayList<XYChart.Series<Float, Float>> avgSeries = new ArrayList<>();
 
-    private ArrayList<XYChart.Series<Float, Float>> heartrateSeries = new ArrayList<>();
+    private static List<GamePerformanceRecord> gamePerformanceRecords = new ArrayList<>();
+    private ArrayList<XYChart.Series<Float, Float>> heartRateSeries = new ArrayList<>();
 
     @FXML private TextArea informationTextArea;
     @FXML private Button importfNIRSDataButton;
@@ -50,6 +53,7 @@ public class Controller
     @FXML private Button importSubjectiveDataButton;
     @FXML private Button generateGraphButton;
     @FXML private Button generateAveragedGraphButton;
+    private ArrayList<BarChart.Series<String, Integer>> subjectiveSeries = new ArrayList<>();
     @FXML
     private Button generateHeartRateGraphButton;
     @FXML private Button linkEmpaticaToPerformanceButton;
@@ -110,6 +114,8 @@ public class Controller
     @FXML private ProgressBar progressBar;
     @FXML
     private Button importGameplayDataButton;
+    @FXML
+    private Button generateSubjectiveRatingGraphButton;
 
     private static int channels = 0;
     private static int times = 0;
@@ -129,6 +135,8 @@ public class Controller
     private static ObservableList<fNIRSRecord> data = FXCollections.observableArrayList();
     private static List<fNIRSRecord> fNIRSRecords = new ArrayList<>();
     private static List<EmpaticaRecord> empaticaRecords = new ArrayList<>();
+    @FXML
+    private BarChart<String, Integer> subjectiveRatingChart;
 
     @FXML
     private void handleCloseButtonAction(ActionEvent event)
@@ -318,7 +326,8 @@ public class Controller
         printEndOfFunction();
     }
 
-    @FXML private void generateAveragedfNIRSChart(ActionEvent event)
+    @FXML
+    private void generateAveragedfNIRSChart(ActionEvent ehvent)
     {
         printToInfoBox("Generating Averaged fNIRS Graph");
 
@@ -603,13 +612,13 @@ public class Controller
 
     @FXML
     private void importSubjectiveData() throws IOException {
-      /*  printToInfoBox("Importing Subjective Workload Rating Data");
+        printToInfoBox("Importing Subjective Workload Rating Data");
 
         File file;
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Import Subjective Workload Rating Data");
-        fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Subjective Data Excel Spreadsheet", "Subjective_ratings*.xlsx"));
+        fc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Subjective Data CSV", "Subjective_ratings*.csv"));
 
         file = fc.showOpenDialog(stage);
 
@@ -627,9 +636,20 @@ public class Controller
         boolean start = false;
         int count = 0;
 
+        String split[];
+
         while ((currLine = br.readLine()) != null)
         {
-            //Do file logic
+            split = currLine.split(",");
+
+            if (start && !currLine.isEmpty()) {
+                GamePerformanceRecord temp = new GamePerformanceRecord(count - 1);
+                temp.setLevel(new SimpleIntegerProperty(Integer.parseInt(split[0])));
+                temp.setRating(new SimpleIntegerProperty(Integer.parseInt(split[1])));
+
+                gamePerformanceRecords.add(temp);
+            } else if (count == 0)
+                start = true;
 
             count++;
         }
@@ -637,10 +657,10 @@ public class Controller
         br.close();
         fr.close();
 
-        fNIRSSpreadsheet.refresh();
+        generateSubjectiveRatingGraphButton.setDisable(gamePerformanceRecords.isEmpty());
+
         printToInfoBox("Loaded Subjective Workload Rating data");
         printEndOfFunction();
-        */
     }
 
     @FXML
@@ -825,41 +845,41 @@ public class Controller
             long initTime = empaticaRecords.get(0).getHeartRateEpoch();
 
 
-            if (heartrateSeries.size() > 0)
-                heartrateSeries.clear();
+            if (heartRateSeries.size() > 0)
+                heartRateSeries.clear();
 
             progressBar.setProgress(0);
             printToInfoBox("Adding Data Points");
 
-            heartrateSeries.add(new XYChart.Series<>());
+            heartRateSeries.add(new XYChart.Series<>());
 
             for (EmpaticaRecord record : empaticaRecords) {
                 if (Float.isFinite(record.getHeartRate())) {
                     float currTime = (int) (record.getHeartRateEpoch() - initTime);
-                    heartrateSeries.get(0).getData().add(new XYChart.Data(currTime, record.getHeartRate()));
+                    heartRateSeries.get(0).getData().add(new XYChart.Data(currTime, record.getHeartRate()));
                 }
                 progressBar.setProgress(progressBar.getProgress() + 0.5 / empaticaRecords.size());
             }
 
             Node node;
 
-            heartrateSeries.get(0).setName("Heart Rate");
+            heartRateSeries.get(0).setName("Heart Rate");
 
-            for (XYChart.Data data : heartrateSeries.get(0).getData()) {
+            for (XYChart.Data data : heartRateSeries.get(0).getData()) {
                 node = new Rectangle(0, 0);
                 node.setVisible(false);
                 data.setNode(node);
 
-                progressBar.setProgress(progressBar.getProgress() + 0.5 / heartrateSeries.size());
+                progressBar.setProgress(progressBar.getProgress() + 0.5 / heartRateSeries.size());
             }
 
             int j = 0;
 
             printToInfoBox("Removing Null Anomalies");
 
-            while (j < heartrateSeries.size()) {
-                if (heartrateSeries.get(j).getData().size() == 0)
-                    heartrateSeries.remove(j);
+            while (j < heartRateSeries.size()) {
+                if (heartRateSeries.get(j).getData().size() == 0)
+                    heartRateSeries.remove(j);
                 else
                     j++;
             }
@@ -870,7 +890,7 @@ public class Controller
 
             Platform.runLater(() ->
             {
-                heartRateChart.getData().addAll(heartrateSeries);
+                heartRateChart.getData().addAll(heartRateSeries);
                 progressBar.setProgress(0);
             });
 
@@ -888,5 +908,49 @@ public class Controller
     private void toggleHeartRateChart() {
         heartRateChart.setVisible(toggleHeartRateChartButton.isSelected());
         heartRateChart.setManaged(toggleHeartRateChartButton.isSelected());
+    }
+
+    @FXML
+    private void generateSubjectiveRatingGraph() {
+        if (subjectiveRatingChart.getData().size() > 0)
+            subjectiveRatingChart.getData().remove(0, subjectiveRatingChart.getData().size());
+
+        new Thread(() -> {
+            if (subjectiveSeries.size() > 0)
+                subjectiveSeries.clear();
+
+            progressBar.setProgress(0);
+            printToInfoBox("Adding Data Points");
+
+            for (int i = 0; i < 13; i++)
+                subjectiveSeries.add(new XYChart.Series<>());
+
+            for (int j = 0; j < 3; j++) {
+                for (int i = 0; i < 13; i++) {
+                    GamePerformanceRecord record = gamePerformanceRecords.get(i + j * 13);
+                    subjectiveSeries.get(i).getData().add(new XYChart.Data<>(String.valueOf("Round " + j), record.getRating()));
+                    progressBar.setProgress(progressBar.getProgress() + 0.5 / (gamePerformanceRecords.size() * 13));
+                }
+            }
+
+            int j = 0;
+
+            while (j < subjectiveSeries.size()) {
+                if (subjectiveSeries.get(j).getData().size() == 0)
+                    subjectiveSeries.remove(j);
+                else
+                    j++;
+            }
+
+            printToInfoBox("Generating Bar Chart");
+
+            Platform.runLater(() ->
+            {
+                subjectiveRatingChart.getData().addAll(subjectiveSeries);
+                progressBar.setProgress(0);
+            });
+
+            printEndOfFunction();
+        }).start();
     }
 }
